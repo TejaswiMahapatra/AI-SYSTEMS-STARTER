@@ -1,0 +1,42 @@
+# FastAPI
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.25
+asyncpg==0.29.0
+alembic==1.13.1
+
+# Redis
+redis==5.0.1
+
+# Vector DB
+weaviate-client==4.4.0
+
+# LLM & Embeddings
+langchain==0.1.0
+langchain-core==0.1.0
+langgraph==0.0.20
+sentence-transformers==2.3.1
+
+# PDF Processing
+pdfplumber==0.10.3
+pypdf==3.17.4
+
+# Storage
+minio==7.2.3
+
+# Observability
+prometheus-client==0.19.0
+langsmith==0.0.77
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0
+
+# Utilities
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
