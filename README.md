@@ -234,7 +234,7 @@ This project is licensed under the Apache License 2.0, which includes explicit p
 ## Learn More
 
 - **Documentation**: [docs/](./docs/)
-- **Video Tutorial**: https://youtu.be/vvI3azvF9jk
+- **Video Tutorial**: https://youtu.be/MNGdi4wZWsE
 - **Community**: [GitHub Discussions](https://github.com/TejaswiMahapatra/ai-systems-starter/discussions)
 - **Issues**: [GitHub Issues](https://github.com/TejaswiMahapatra/ai-systems-starter/issues)
 
