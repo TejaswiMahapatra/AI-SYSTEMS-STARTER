@@ -75,7 +75,6 @@ temp/
 
 # Uploads (local dev)
 uploads/
-*.pdf
 
 # OS
 .DS_Store
