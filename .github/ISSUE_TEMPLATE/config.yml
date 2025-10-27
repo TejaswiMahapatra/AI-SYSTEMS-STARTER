@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/TejaswiMahapatra/ai-systems-starter/discussions
+    about: Ask questions, share ideas, and discuss with the community
+  - name: Documentation
+    url: https://github.com/TejaswiMahapatra/ai-systems-starter/blob/main/docs/getting-started.md
+    about: Read the getting started guide and documentation
+  - name: Architecture Documentation
+    url: https://github.com/TejaswiMahapatra/ai-systems-starter/blob/main/ARCHITECTURE.md
+    about: Learn about the system architecture and design decisions

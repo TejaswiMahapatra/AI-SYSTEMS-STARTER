@@ -1,4 +1,4 @@
-# AI Systems Starter
+# Clause.AI
 
 **A production-ready blueprint for building AI-powered applications with RAG, LangGraph agents, and LLMOps.**
 
@@ -16,19 +16,21 @@
 
 This starter kit includes a **complete, working AI system** for contract analysis, demonstrating:
 
-### Core AI Features
-- **PDF Ingestion Pipeline** (parse → chunk → embed → store)
-- **Vector Search** (Weaviate for semantic retrieval)
-- **RAG (Retrieval-Augmented Generation)** (context-aware Q&A)
-- **LangGraph Agents** (deep reasoning with planning + tools)
-- **Background Workers** (Redis Streams for async processing)
+### Core Features (Implemented)
+- **Clause-Aware Chunking** - Preserves legal document structure (clause numbers, hierarchy, context)
+- **PDF Ingestion Pipeline** - Background workers with Redis queue for async processing
+- **Vector Search** - Weaviate with 384D embeddings (all-MiniLM-L6-v2) and HNSW indexing
+- **RAG (Retrieval-Augmented Generation)** - Context-aware Q&A with human-friendly responses
+- **LangGraph Agents** - Multi-tool reasoning (rag_query, analyze_content, compare_content, generate_report)
+- **Real-time Progress Updates** - Redis Pub/Sub + WebSocket streaming for document processing status
+- **Human-Friendly NLG** - Conversational AI responses with plain language, bullets, and "Key Takeaway" sections
 
 ### Production Features
-- **LLMOps** (LangSmith tracing, cost tracking, prompt versioning)
-- **Testing** (unit, integration, LLM evaluation with DeepEval)
-- **Observability** (Prometheus + Grafana dashboards)
-- **Modern Frontend** (Next.js + Vercel AI SDK for streaming chat)
-- **Deployment Ready** (Docker Compose, Kubernetes manifests)
+- **Async/Await Throughout** - FastAPI with type hints and Pydantic validation
+- **Plugin Architecture** - Easy swapping of LLM providers, embeddings, and vector databases
+- **Docker Compose** - Local development with Postgres, Weaviate, Redis, MinIO, Ollama
+- **Makefile Commands** - Single command (`make run`) to start entire system
+- **Comprehensive Documentation** - Architecture diagrams, API docs, getting started guide
 
 ---
 
@@ -37,76 +39,90 @@ This starter kit includes a **complete, working AI system** for contract analysi
 ### Prerequisites
 - **Docker** & **Docker Compose** ([Install](https://docs.docker.com/get-docker/))
 - **Python 3.11+** ([Install](https://www.python.org/downloads/))
-- **Node.js 18+** ([Install](https://nodejs.org/)) _(for frontend)_
 
 **That's it!** No API keys required. Everything runs locally for free.
 
 ### Installation
 
 ```bash
-# 1. Clone the repository
+# Clone the repository
 git clone https://github.com/TejaswiMahapatra/ai-systems-starter.git
 cd ai-systems-starter
-# 2. Run initialization (sets up everything)
-make init
 
-# 3. Pull an open-source LLM (while services start)
-docker exec -it ai-systems-ollama ollama pull llama3.1:8b
-
-# 4. Start development environment  
-make dev
+# Start everything with one command
+make run
 ```
 
-**That's it!** You now have:
-- Backend API running at http://localhost:8000/docs
-- Ollama (local LLM) at http://localhost:11434
-- Weaviate (vector DB) at http://localhost:8080
+**Press `Ctrl+C` to stop.**
+
+This single command:
+- Starts all Docker services (Postgres, Weaviate, Redis, MinIO, Ollama)
+- Pulls the Ollama model if needed (llama3.1:8b)
+- Starts the backend API + ingestion worker together
+
+**You now have:**
+- Backend API: http://localhost:8000/docs
+- Ollama (local LLM): http://localhost:11434
+- Weaviate (vector DB): http://localhost:8080
 - PostgreSQL, Redis, MinIO all running
-- Grafana dashboards at http://localhost:3001
 
 **Want to use paid APIs?** Edit `.env` and set `LLM_PROVIDER=openai` and add your `OPENAI_API_KEY`
-- Grafana dashboards at http://localhost:3001
 
 ---
 
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     FRONTEND                            │
-│              (Next.js + Vercel AI SDK)                  │
-│  - Upload PDFs                                          │
-│  - Chat interface (streaming)                           │
-│  - Agent interactions                                   │
-└────────────────────┬────────────────────────────────────┘
-                     │ HTTP API
-                     │
-┌────────────────────▼────────────────────────────────────┐
-│                  BACKEND                                │
-│              (FastAPI + LangGraph)                      │
-│                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │ PDF Service  │  │   Embeddings │  │ LangGraph    │   │
-│  │ (pdfplumber) │  │   (OpenAI)   │  │ Agents       │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-│                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │ Redis Queue  │  │   Workers    │  │ Policy Engine│   │
-│  │ (Background) │  │   (Async)    │  │ (OPA/Rego)   │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     │
-┌────────────────────▼────────────────────────────────────┐
-│                 DATA LAYER                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │  PostgreSQL  │  │   Weaviate   │  │     MinIO    │   │
-│  │  (Metadata)  │  │   (Vectors)  │  │  (S3-compat) │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-└─────────────────────────────────────────────────────────┘
++-------------------------------------------------------------+
+|                     FRONTEND                                |
+|              (Next.js + Vercel AI SDK)                      |
+|  - Upload PDFs via drag & drop                              |
+|  - Chat interface with streaming                            |
+|  - Real-time progress via WebSocket                         |
++------------------------+------------------------------------+
+                         | HTTP/WebSocket
+                         |
++------------------------v------------------------------------+
+|                  BACKEND API                                |
+|                  (FastAPI)                                  |
+|                                                             |
+|  +--------------+  +--------------+  +--------------+       |
+|  | Ingest API   |  |  Query API   |  |  WebSocket   |       |
+|  | /upload      |  |  /rag        |  |  /ws/:id     |       |
+|  |              |  |  /agent      |  |              |       |
+|  +--------------+  +--------------+  +--------------+       |
++------------------------+------------------------------------+
+                         |
+           +-------------+-------------+
+           |                           |
++----------v------+            +-------v------+
+|   WORKER        |            |   SERVICES   |
+|  (Background)   |            |              |
+|                 |            | - LLM        |
+| - PDF Parse     |            | - Embeddings |
+| - Chunking      |            | - Vector DB  |
+| - Embedding     |            | - Storage    |
+| - Storage       |            |              |
++-----------------+            +--------------+
+           |                           |
+           +-------------+-------------+
+                         |
++------------------------v------------------------------------+
+|                 DATA LAYER                                  |
+|  +--------------+  +--------------+  +--------------+       |
+|  |  PostgreSQL  |  |   Weaviate   |  |     MinIO    |       |
+|  |  (Metadata)  |  |   (Vectors)  |  |  (PDF Files) |       |
+|  +--------------+  +--------------+  +--------------+       |
+|  +--------------+                                           |
+|  |    Redis     |                                           |
+|  | (Queue/PubSub)|                                          |
+|  +--------------+                                           |
++-------------------------------------------------------------+
 ```
 
-For detailed architecture, see [docs/architecture/overview.md](./docs/architecture/overview.md)
+**Learn more:**
+- [Getting Started Guide](docs/getting-started.md) - Complete setup and testing walkthrough
+- [Architecture Documentation](ARCHITECTURE.md) - Detailed technical architecture
 
 ---
 
@@ -115,31 +131,49 @@ For detailed architecture, see [docs/architecture/overview.md](./docs/architectu
 ### 1. Upload a PDF Contract
 
 ```bash
-curl -X POST -F "file=@examples/contracts/sample.pdf" \
-  http://localhost:8000/api/ingest
+curl -X POST http://localhost:8000/api/v1/ingest/upload \
+  -F "file=@examples/contracts/sample_clause_contract.pdf" \
+  -F "collection_name=Default"
 ```
 
-### 2. Query the Contract
+**Returns:** `document_id` (save this for queries)
+
+**Watch your terminal** - the worker processes the document in real-time with clause-aware chunking.
+
+### 2. Check Processing Status
 
 ```bash
-curl -X POST http://localhost:8000/api/query \
+curl http://localhost:8000/api/v1/ingest/status/{document_id}
+```
+
+**Returns:** Status, number of chunks, processing time
+
+### 3. Query with RAG
+
+```bash
+curl -X POST http://localhost:8000/api/v1/query/rag \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "What is the termination clause?",
-    "contract_id": "abc123"
+    "question": "What are the termination clauses?",
+    "collection_name": "Default",
+    "top_k": 3
   }'
 ```
 
-### 3. Use the Deep Agent
+**Returns:** Human-friendly answer with sources and confidence score
+
+### 4. Use the Agent
 
 ```bash
-curl -X POST http://localhost:8000/api/agent/query \
+curl -X POST http://localhost:8000/api/v1/query/agent \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "Find all risky clauses and explain why",
-    "contract_id": "abc123"
+    "question": "Summarize the key terms and risks",
+    "collection_name": "Default"
   }'
 ```
+
+**Returns:** Agent uses multiple tools to analyze and synthesize a comprehensive answer
 
 ---
 
@@ -147,15 +181,16 @@ curl -X POST http://localhost:8000/api/agent/query \
 
 ```bash
 make help           # Show all available commands
-make init           # Initial setup (run once)
-make dev            # Start development environment
-make down           # Stop all services
-make clean          # Remove all data (fresh start)
-make test           # Run all tests
-make seed           # Load sample data
-make logs           # View logs from all services
+make run            # Start complete system (backend + worker + infra)
+make stop-all       # Stop all processes
 make status         # Show status of all services
+make logs           # View logs from all services
+make shell-postgres # Open PostgreSQL shell
+make shell-redis    # Open Redis CLI
+make ollama-list    # Show downloaded Ollama models
 ```
+
+See the [Makefile](Makefile) for all available commands.
 
 ---
 
@@ -196,8 +231,6 @@ class PineconeDB(VectorDBInterface):
         # Your implementation
         pass
 ```
-
-See [docs/examples/](./docs/examples/) for full tutorials.
 
 ---
 
@@ -258,4 +291,4 @@ Built with ❤️ for the AI community. Special thanks to:
 
 ---
 
-**Ready to build your AI system?** Run `make init` and let's go! 🚀
+**Ready to build your AI system?** Run `make run` and let's go! 🚀

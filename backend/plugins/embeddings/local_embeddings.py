@@ -9,10 +9,8 @@ Licensed under the Apache License, Version 2.0
 
 from typing import List
 from sentence_transformers import SentenceTransformer
-
 from backend.interfaces.embeddings import EmbeddingProvider
 from backend.config import settings
-
 
 class LocalEmbeddings(EmbeddingProvider):
     """
@@ -34,14 +32,10 @@ class LocalEmbeddings(EmbeddingProvider):
         """
         self.model_name = model_name or settings.local_embedding_model
         self.device = device or settings.local_embedding_device
-
-        # Load model (cached after first load)
         self.model = SentenceTransformer(self.model_name, device=self.device)
 
     async def embed_text(self, text: str) -> List[float]:
         """Generate embeddings for a single text."""
-        # sentence-transformers is CPU-bound, not I/O-bound
-        # For true async, we'd use asyncio.to_thread, but for simplicity:
         embedding = self.model.encode(text, convert_to_tensor=False)
         return embedding.tolist()
 
@@ -68,7 +62,6 @@ class LocalEmbeddings(EmbeddingProvider):
         return self.model_name
 
 
-# Singleton instance
 _local_embeddings_instance = None
 
 

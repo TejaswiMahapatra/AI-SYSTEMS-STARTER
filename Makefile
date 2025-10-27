@@ -125,6 +125,47 @@ backend: ## Run backend server (for development)
 	@echo "$(CYAN)Starting backend server...$(RESET)"
 	@cd backend && uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
+worker: ## Run ingestion worker (for development)
+	@echo "$(CYAN)Starting ingestion worker...$(RESET)"
+	@python -m backend.workers.ingestion_worker
+
+run: ## Start complete system (infra + backend + worker)
+	@echo "$(CYAN)Starting complete Clause.AI system...$(RESET)"
+	@echo ""
+	@echo "$(CYAN)Step 1: Starting infrastructure...$(RESET)"
+	@cd infra/docker && docker-compose up -d
+	@echo "Waiting for services..."
+	@sleep 10
+	@echo ""
+	@echo "$(CYAN)Step 2: Pulling Ollama model (if needed)...$(RESET)"
+	@docker exec ai-systems-ollama ollama list | grep -q llama3.1:8b || docker exec ai-systems-ollama ollama pull llama3.1:8b
+	@echo ""
+	@echo "$(CYAN)Step 3: Starting backend & worker...$(RESET)"
+	@echo "Backend will start on http://localhost:8000"
+	@echo "Worker will process documents in background"
+	@echo ""
+	@echo "Press Ctrl+C to stop"
+	@echo ""
+	@trap 'kill 0' INT; \
+	uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload & \
+	python -m backend.workers.ingestion_worker & \
+	wait
+
+dev-full: ## Start everything in separate terminals (tmux)
+	@command -v tmux >/dev/null 2>&1 || { echo "tmux required. Install: brew install tmux"; exit 1; }
+	@echo "$(CYAN)Starting in tmux session 'clauseai'...$(RESET)"
+	@tmux new-session -d -s clauseai -n infra 'cd infra/docker && docker-compose up'
+	@tmux new-window -t clauseai -n backend 'source venv/bin/activate && uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload'
+	@tmux new-window -t clauseai -n worker 'source venv/bin/activate && python -m backend.workers.ingestion_worker'
+	@tmux attach -t clauseai
+
+stop-all: ## Stop all running processes (backend, worker, docker)
+	@echo "$(CYAN)Stopping all processes...$(RESET)"
+	@pkill -f "uvicorn backend.main:app" || true
+	@pkill -f "ingestion_worker" || true
+	@cd infra/docker && docker-compose down
+	@echo "All processes stopped"
+
 frontend: ## Run frontend (for development)
 	@echo "$(CYAN)Starting frontend server...$(RESET)"
 	@cd frontend && npm run dev

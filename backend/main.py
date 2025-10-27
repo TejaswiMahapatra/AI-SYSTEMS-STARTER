@@ -8,24 +8,21 @@ Licensed under the Apache License, Version 2.0
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
-
 from backend.config import settings, validate_settings
 from backend.core.database import init_db, close_db
 from backend.core.redis_client import close_redis
-from backend.api.v1 import health
+from backend.api.v1 import health, ingest, websocket, query
 
-# Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.log_level),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator:
@@ -41,19 +38,15 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
     - Close database connections
     - Close Redis connections
     """
-    # Startup
     logger.info("Starting AI Systems Starter API...")
 
     try:
-        # Validate configuration
         validate_settings()
         logger.info("Configuration validated successfully")
 
-        # Initialize database
         await init_db()
         logger.info("Database initialized successfully")
 
-        # Log configuration
         logger.info(f"Environment: {settings.environment}")
         logger.info(f"LLM Provider: {settings.llm_provider}")
         logger.info(f"Embedding Provider: {settings.embedding_provider}")
@@ -64,7 +57,6 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
 
     yield
 
-    # Shutdown
     logger.info("Shutting down AI Systems Starter API...")
 
     try:
@@ -75,7 +67,6 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
         logger.error(f"Shutdown error: {e}")
 
 
-# Create FastAPI application
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
@@ -86,7 +77,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -95,16 +85,16 @@ app.add_middleware(
     allow_headers=settings.cors_allow_headers,
 )
 
-# Mount Prometheus metrics endpoint (if enabled)
 if settings.enable_prometheus:
     metrics_app = make_asgi_app()
     app.mount("/metrics", metrics_app)
     logger.info("Prometheus metrics enabled at /metrics")
 
-# Include API routers
 app.include_router(health.router, prefix="/api/v1", tags=["Health"])
+app.include_router(ingest.router, prefix="/api/v1", tags=["Ingestion"])
+app.include_router(websocket.router, prefix="/api/v1", tags=["WebSocket"])
+app.include_router(query.router, prefix="/api/v1", tags=["Query"])
 
-# Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(_request, exc):
     """Handle all unhandled exceptions."""
@@ -117,8 +107,6 @@ async def global_exception_handler(_request, exc):
         }
     )
 
-
-# Root endpoint
 @app.get("/", include_in_schema=False)
 async def root():
     """Root endpoint with API information."""
@@ -132,7 +120,6 @@ async def root():
 
 
 if __name__ == "__main__":
-    import uvicorn
 
     uvicorn.run(
         "backend.main:app",

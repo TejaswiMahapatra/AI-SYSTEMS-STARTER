@@ -9,11 +9,9 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
-
 from sqlalchemy import String, Integer, DateTime, Enum as SQLEnum, Text, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
-
 from backend.core.database import Base
 
 
@@ -36,7 +34,6 @@ class Document(Base):
 
     __tablename__ = "documents"
 
-    # Primary key
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -44,17 +41,14 @@ class Document(Base):
         index=True
     )
 
-    # File information
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
     file_size: Mapped[int] = mapped_column(BigInteger, nullable=False)  # in bytes
     mime_type: Mapped[str] = mapped_column(String(100), default="application/pdf")
 
-    # Storage paths
     minio_path: Mapped[str] = mapped_column(String(500), nullable=False)
     minio_bucket: Mapped[str] = mapped_column(String(100), default="pdf-uploads")
 
-    # Processing status
     status: Mapped[DocumentStatus] = mapped_column(
         SQLEnum(DocumentStatus),
         default=DocumentStatus.QUEUED,
@@ -63,25 +57,21 @@ class Document(Base):
     )
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    # Processing results
     num_pages: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     num_chunks: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     total_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
-    # Vector DB reference
     weaviate_collection: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True
     )
 
-    # User tracking (for future multi-user support)
     user_id: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True,
         index=True
     )
 
-    # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

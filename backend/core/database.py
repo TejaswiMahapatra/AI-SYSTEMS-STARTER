@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
-
 from backend.config import settings
 
 
@@ -26,13 +25,12 @@ class Base(DeclarativeBase):
 # Async engine for database operations
 engine = create_async_engine(
     settings.database_url,
-    echo=settings.debug,  # Log SQL queries in debug mode
+    echo=settings.debug, 
     future=True,
     pool_pre_ping=True,  # Verify connections before using
     poolclass=NullPool if settings.environment == "development" else None,
 )
 
-# Session factory for creating database sessions
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
@@ -63,6 +61,18 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
+def get_db_session():
+    """
+    Context manager for getting a database session in background workers.
+
+    Usage:
+        async with get_db_session() as db:
+            result = await db.execute(select(Document))
+            documents = result.scalars().all()
+    """
+    return AsyncSessionLocal()
+
+
 async def init_db() -> None:
     """
     Initialize database tables.
@@ -71,10 +81,6 @@ async def init_db() -> None:
     NOTE: In production, use Alembic migrations instead.
     """
     async with engine.begin() as conn:
-        # Import all models here to ensure they're registered
-        from backend.models import document  # noqa: F401
-
-        # Create all tables
         await conn.run_sync(Base.metadata.create_all)
 
 
@@ -83,7 +89,6 @@ async def close_db() -> None:
     await engine.dispose()
 
 
-# Health check function
 async def check_db_health() -> bool:
     """
     Check if database connection is healthy.

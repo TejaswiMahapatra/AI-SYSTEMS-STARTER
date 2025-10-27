@@ -1,0 +1,9 @@
+Compare the following two pieces of content, focusing on {comparison_aspect}.
+
+Content 1:
+{content1}
+
+Content 2:
+{content2}
+
+Provide a structured comparison highlighting key differences, similarities, and implications.

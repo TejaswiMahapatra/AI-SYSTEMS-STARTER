@@ -1,0 +1,12 @@
+Generate a {report_type} report titled "{title}" based on the following findings.
+
+Findings:
+{findings_text}
+
+Create a well-structured, professional report with:
+1. Executive Summary
+2. Key Findings
+3. Detailed Analysis (if applicable)
+4. Recommendations/Conclusions
+
+Report:

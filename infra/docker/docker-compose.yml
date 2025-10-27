@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"  
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,6 +30,7 @@ services:
       CLUSTER_HOSTNAME: 'node1'
     ports:
       - "8080:8080"
+      - "50051:50051"
     volumes:
       - weaviate_data:/var/lib/weaviate
     healthcheck:
@@ -55,6 +56,20 @@ services:
       retries: 5
     networks:
       - ai-systems-network
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: ai-systems-redisinsight
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight_data:/data
+    networks:
+      - ai-systems-network
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOSTS=local:ai-systems-redis:6379
 
   minio:
     image: minio/minio:latest
@@ -98,6 +113,7 @@ volumes:
   postgres_data:
   weaviate_data:
   redis_data:
+  redisinsight_data:
   minio_data:
   ollama_data:
 

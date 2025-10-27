@@ -1,0 +1,116 @@
+name: Bug Report
+description: File a bug report to help us improve
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! 
+        
+        Before submitting, please:
+        - Search existing issues to avoid duplicates
+        - Check the [troubleshooting guide](https://github.com/TejaswiMahapatra/ai-systems-starter/blob/main/docs/getting-started.md#troubleshooting)
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Tell us what went wrong...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Start the system with `make run`
+        2. Upload document via `curl -X POST ...`
+        3. Query with `curl -X POST /api/v1/query/rag ...`
+        4. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+      placeholder: The system should...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Instead, the system...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - macOS
+        - Linux (Ubuntu)
+        - Linux (Debian)
+        - Linux (Other)
+        - Windows
+        - Docker (specify host OS in additional context)
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      placeholder: "3.11.6"
+    validations:
+      required: true
+
+  - type: input
+    id: docker-version
+    attributes:
+      label: Docker Version (if applicable)
+      placeholder: "24.0.5"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Log Output
+      description: Please copy and paste any relevant log output (from backend, worker, or docker logs)
+      render: shell
+      placeholder: |
+        # Backend logs
+        ERROR - Agent timeout...
+        
+        # Or docker logs
+        docker logs ai-systems-backend
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: |
+        - Document size: 50 pages
+        - Collection size: 1000 chunks
+        - Custom configuration: ...
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched for similar issues
+          required: true
+        - label: I have checked the troubleshooting guide
+          required: true
+        - label: I have included all required information above
+          required: true

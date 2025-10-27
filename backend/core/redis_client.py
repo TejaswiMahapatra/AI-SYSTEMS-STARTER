@@ -9,11 +9,9 @@ import json
 from typing import Any, Optional
 from redis.asyncio import Redis, ConnectionPool
 from redis.exceptions import RedisError
-
 from backend.config import settings
 
 
-# Global Redis connection pool
 _redis_pool: Optional[ConnectionPool] = None
 _redis_client: Optional[Redis] = None
 
@@ -59,7 +57,6 @@ async def close_redis() -> None:
         _redis_pool = None
 
 
-# Cache utilities
 class RedisCache:
     """Helper class for common Redis caching patterns."""
 
@@ -119,7 +116,6 @@ class RedisCache:
             return False
 
 
-# Job queue utilities
 class RedisQueue:
     """Helper class for Redis-based job queue."""
 
@@ -179,7 +175,144 @@ class RedisQueue:
             return False
 
 
-# Health check
+# Factory functions for dependency injection
+def get_redis_queue(queue_name: str = "ingestion_queue") -> RedisQueue:
+    """
+    Get a RedisQueue instance for dependency injection.
+
+    Args:
+        queue_name: Name of the Redis queue (default: "ingestion_queue")
+
+    Returns:
+        RedisQueue instance
+    """
+    return RedisQueue(queue_name=queue_name)
+
+
+def get_redis_client() -> Redis:
+    """
+    Get a Redis client instance.
+    Alias for get_redis() for consistency.
+    """
+    return get_redis()
+
+
+class RedisPubSub:
+    """
+    Helper class for Redis Pub/Sub (real-time progress updates).
+
+    IMPORTANT: Pub/Sub requires a SEPARATE Redis connection per subscriber
+    to avoid blocking the main connection pool.
+
+    Usage (Publisher):
+        pubsub = RedisPubSub()
+        await pubsub.publish("channel:name", {"status": "processing"})
+
+    Usage (Subscriber):
+        pubsub = RedisPubSub()
+        async for message in pubsub.subscribe("channel:name"):
+            print(message)
+            if message.get("status") == "completed":
+                break
+    """
+
+    def __init__(self):
+        """Initialize pub/sub with main Redis client for publishing."""
+        self.redis = get_redis()
+
+    async def publish(self, channel: str, message: dict) -> int:
+        """
+        Publish a message to a channel.
+
+        Args:
+            channel: Channel name (e.g., "document:abc123:progress")
+            message: Message dict (will be JSON serialized)
+
+        Returns:
+            Number of subscribers that received the message (0 if none)
+
+        Example:
+            await pubsub.publish(
+                "document:123:progress",
+                {"status": "processing", "progress": 50}
+            )
+        """
+        try:
+            serialized = json.dumps(message)
+            num_subscribers = await self.redis.publish(channel, serialized)
+            return num_subscribers
+        except (RedisError, TypeError) as e:
+            print(f"Error publishing to {channel}: {e}")
+            return 0
+
+    async def subscribe(self, channel: str):
+        """
+        Subscribe to a channel and yield messages.
+
+        IMPORTANT: Creates a NEW Redis connection for this subscription
+        to avoid blocking other operations.
+
+        Args:
+            channel: Channel name to subscribe to
+
+        Yields:
+            Decoded message dictionaries from the channel
+
+        Example:
+            async for msg in pubsub.subscribe("document:123:progress"):
+                print(f"Progress: {msg['progress']}%")
+                if msg.get("status") == "completed":
+                    break
+
+        Note: Connection is automatically cleaned up when generator exits
+        """
+        pubsub_redis = Redis(
+            connection_pool=ConnectionPool.from_url(
+                settings.redis_url,
+                decode_responses=True,
+                max_connections=2  # Small pool for pub/sub
+            )
+        )
+
+        pubsub = pubsub_redis.pubsub()
+
+        try:
+            await pubsub.subscribe(channel)
+            print(f"[PubSub] Subscribed to channel: {channel}")
+
+            async for raw_message in pubsub.listen():
+                if raw_message["type"] == "message":
+                    try:
+                        data = json.loads(raw_message["data"])
+                        yield data
+                    except json.JSONDecodeError as e:
+                        print(f"[PubSub] Failed to decode message: {e}")
+                        continue
+
+        except Exception as e:
+            print(f"[PubSub] Error in subscription: {e}")
+            raise
+
+        finally:
+            try:
+                await pubsub.unsubscribe(channel)
+                await pubsub.close()
+                await pubsub_redis.aclose()
+                print(f"[PubSub] Unsubscribed from channel: {channel}")
+            except Exception as e:
+                print(f"[PubSub] Error during cleanup: {e}")
+
+
+def get_redis_pubsub() -> RedisPubSub:
+    """
+    Get a RedisPubSub instance.
+
+    Returns:
+        RedisPubSub instance for publishing and subscribing to channels
+    """
+    return RedisPubSub()
+
+
 async def check_redis_health() -> bool:
     """
     Check if Redis connection is healthy.

@@ -1,0 +1,15 @@
+Based on the following findings, answer the user's original question comprehensively.
+
+Original Question: {question}
+
+Findings:
+{findings}
+
+Provide a well-structured, comprehensive answer that:
+- Directly addresses the question
+- References specific findings and evidence
+- Explains reasoning clearly
+- Synthesizes information from all findings
+- Provides actionable insights where relevant
+
+Answer:

@@ -1,0 +1,11 @@
+Analyze the following contract clause for potential legal risks:
+
+Clause:
+{clause_text}
+
+Provide:
+1. Risk Level (Low/Medium/High)
+2. Risk Factors (specific issues identified)
+3. Recommendations (how to mitigate risks)
+
+Analysis:

@@ -8,7 +8,7 @@ Licensed under the Apache License, Version 2.0
 from typing import Dict, Any
 from fastapi import APIRouter, status
 from pydantic import BaseModel
-
+import httpx
 from backend.config import settings
 from backend.core.database import check_db_health
 from backend.core.redis_client import check_redis_health
@@ -83,8 +83,6 @@ async def detailed_health_check() -> DetailedHealthResponse:
             "status": "unhealthy",
             "error": str(e)
         }
-
-    # Check Redis
     try:
         redis_healthy = await check_redis_health()
         services["redis"] = {
@@ -96,8 +94,6 @@ async def detailed_health_check() -> DetailedHealthResponse:
             "status": "unhealthy",
             "error": str(e)
         }
-
-    # Check Weaviate
     try:
         weaviate = get_weaviate()
         weaviate_healthy = await weaviate.health_check()
@@ -111,10 +107,8 @@ async def detailed_health_check() -> DetailedHealthResponse:
             "error": str(e)
         }
 
-    # Check Ollama (if enabled)
     if settings.llm_provider == "ollama":
         try:
-            import httpx
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     f"{settings.ollama_url}/api/tags",
@@ -132,7 +126,6 @@ async def detailed_health_check() -> DetailedHealthResponse:
                 "error": str(e)
             }
 
-    # Determine overall status
     all_healthy = all(
         svc.get("status") == "healthy"
         for svc in services.values()
@@ -158,7 +151,7 @@ async def readiness_check() -> Dict[str, str]:
 
     Returns 200 if the service is ready to accept traffic.
     """
-    # Check critical services
+
     db_healthy = await check_db_health()
 
     if not db_healthy:
