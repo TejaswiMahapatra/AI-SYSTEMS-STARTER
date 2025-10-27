@@ -1,4 +1,4 @@
-# Clause.AI
+# AI Systems Starter
 
 **A production-ready blueprint for building AI-powered applications with RAG, LangGraph agents, and LLMOps.**
 
