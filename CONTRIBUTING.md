@@ -38,10 +38,10 @@ Never contributed to open source before? Here are some resources to help you get
 - [GitHub's Guide to Contributing](https://docs.github.com/en/get-started/quickstart/contributing-to-projects)
 
 **Not sure where to start?** Look for issues labeled:
-- \`good first issue\` - Perfect for newcomers
-- \`help wanted\` - We'd love your help on these
-- \`documentation\` - Improve our docs
-- \`bug\` - Fix reported bugs
+- `good first issue` - Perfect for newcomers
+- `help wanted` - We'd love your help on these
+- `documentation` - Improve our docs
+- `bug` - Fix reported bugs
 
 ---
 
@@ -61,7 +61,7 @@ Before creating a bug report, please check if the issue already exists. If it do
 - **Possible fix** - If you have an idea (optional)
 
 **Example:**
-\`\`\`markdown
+```markdown
 ## Bug: Agent timeout on large documents
 
 **Environment:** macOS 14.0, Python 3.11, Docker 24.0
@@ -75,12 +75,12 @@ Before creating a bug report, please check if the issue already exists. If it do
 **Actual:** TimeoutError after 300s
 
 **Logs:**
-\`\`\`
+```
 ERROR - Ollama request timed out
-\`\`\`
+```
 
 **Possible fix:** Implement streaming or chunked processing
-\`\`\`
+```
 
 ### Suggesting Features
 
@@ -96,7 +96,7 @@ We love new ideas! Before suggesting a feature:
 - **Use cases** - Who benefits from this?
 
 **Example:**
-\`\`\`markdown
+```markdown
 ## Feature: Multi-language document support
 
 **Problem:** Currently only supports English legal documents.
@@ -114,7 +114,7 @@ We love new ideas! Before suggesting a feature:
 **Alternatives:**
 - Translation layer (less accurate)
 - Language-specific models (more complex)
-\`\`\`
+```
 
 ### Improving Documentation
 
@@ -125,11 +125,11 @@ Documentation is crucial! You can help by:
 - Writing blog posts or guides
 
 **Documentation locations:**
-- \`README.md\` - Project overview
-- \`docs/getting-started.md\` - Setup guide
-- \`ARCHITECTURE.md\` - Technical details
-- \`backend/\` - Inline code comments
-- \`examples/\` - Usage examples
+- `README.md` - Project overview
+- `docs/getting-started.md` - Setup guide
+- `ARCHITECTURE.md` - Technical details
+- `backend/` - Inline code comments
+- `examples/` - Usage examples
 
 ### Contributing Code
 
@@ -154,18 +154,18 @@ This prevents wasted effort if the feature doesn't align with project goals.
 
 ### 1. Fork and Clone
 
-\`\`\`bash
+```bash
 # Fork the repo on GitHub, then:
 git clone https://github.com/YOUR_USERNAME/ai-systems-starter.git
 cd ai-systems-starter
 
 # Add upstream remote
 git remote add upstream https://github.com/TejaswiMahapatra/ai-systems-starter.git
-\`\`\`
+```
 
 ### 2. Set Up Environment
 
-\`\`\`bash
+```bash
 # Create virtual environment
 python3.11 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -178,11 +178,11 @@ docker-compose -f infra/docker/docker-compose.yml up -d
 
 # Pull Ollama model
 docker exec ai-systems-ollama ollama pull llama3.1:8b
-\`\`\`
+```
 
 ### 3. Create a Branch
 
-\`\`\`bash
+```bash
 # Update your fork
 git checkout main
 git pull upstream main
@@ -191,7 +191,7 @@ git pull upstream main
 git checkout -b feature/your-feature-name
 # or
 git checkout -b fix/bug-description
-\`\`\`
+```
 
 ### 4. Make Your Changes
 
@@ -202,7 +202,7 @@ git checkout -b fix/bug-description
 
 ### 5. Test Your Changes
 
-\`\`\`bash
+```bash
 # Run the system
 make run
 
@@ -218,7 +218,7 @@ curl -X POST http://localhost:8000/api/v1/ingest/upload \
 curl -X POST http://localhost:8000/api/v1/query/rag \
   -H "Content-Type: application/json" \
   -d '{"question": "What are the key terms?", "collection_name": "TestCollection"}'
-\`\`\`
+```
 
 ---
 
@@ -235,7 +235,7 @@ We follow [PEP 8](https://peps.python.org/pep-0008/) with these specifics:
 - Add docstrings for all public functions/classes
 
 **Example:**
-\`\`\`python
+```python
 async def process_document(
     file_path: str,
     collection_name: str,
@@ -258,33 +258,33 @@ async def process_document(
     """
     # Implementation here
     pass
-\`\`\`
+```
 
 **Naming Conventions:**
-- \`snake_case\` for functions and variables
-- \`PascalCase\` for classes
-- \`UPPER_CASE\` for constants
+- `snake_case` for functions and variables
+- `PascalCase` for classes
+- `UPPER_CASE` for constants
 - Descriptive names (avoid single letters except in loops)
 
 **Good:**
-\`\`\`python
+```python
 def calculate_confidence_score(search_results: List[VectorSearchResult]) -> float:
     avg_score = sum(r.score for r in search_results) / len(search_results)
     return min(avg_score, 1.0)
-\`\`\`
+```
 
 **Bad:**
-\`\`\`python
+```python
 def calc(sr):
     s = sum(r.score for r in sr) / len(sr)
     return min(s, 1.0)
-\`\`\`
+```
 
 ### Async/Await
 
-- Use \`async/await\` for I/O operations
+- Use `async/await` for I/O operations
 - Don't block the event loop with synchronous operations
-- Use \`asyncio.gather()\` for parallel async calls
+- Use `asyncio.gather()` for parallel async calls
 
 ### Error Handling
 
@@ -292,7 +292,7 @@ def calc(sr):
 - Log errors with context
 - Return meaningful error messages
 
-\`\`\`python
+```python
 try:
     result = await process_document(file_path, collection_name)
 except FileNotFoundError:
@@ -301,14 +301,14 @@ except FileNotFoundError:
 except Exception as e:
     logger.error(f"Processing failed: {e}", exc_info=True)
     raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
-\`\`\`
+```
 
 ### Testing
 
 When adding tests:
 - Write unit tests for individual functions
 - Write integration tests for API endpoints
-- Use meaningful test names: \`test_should_return_error_when_file_not_found\`
+- Use meaningful test names: `test_should_return_error_when_file_not_found`
 - Mock external dependencies (Ollama, Weaviate)
 
 ---
@@ -318,28 +318,28 @@ When adding tests:
 Good commit messages help everyone understand the project's history.
 
 **Format:**
-\`\`\`
+```
 <type>(<scope>): <subject>
 
 <body>
 
 <footer>
-\`\`\`
+```
 
 **Types:**
-- \`feat\` - New feature
-- \`fix\` - Bug fix
-- \`docs\` - Documentation changes
-- \`style\` - Code style (formatting, no logic change)
-- \`refactor\` - Code refactoring
-- \`perf\` - Performance improvement
-- \`test\` - Adding tests
-- \`chore\` - Build process, dependencies
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation changes
+- `style` - Code style (formatting, no logic change)
+- `refactor` - Code refactoring
+- `perf` - Performance improvement
+- `test` - Adding tests
+- `chore` - Build process, dependencies
 
 **Examples:**
 
 Good:
-\`\`\`
+```
 feat(agent): add streaming support for LLM responses
 
 - Implement SSE streaming in agent endpoint
@@ -347,9 +347,9 @@ feat(agent): add streaming support for LLM responses
 - Add progress indicators for long-running queries
 
 Closes #123
-\`\`\`
+```
 
-\`\`\`
+```
 fix(chunking): preserve clause numbers in nested sections
 
 Previously, nested clauses (e.g., 5.1.1) were not being
@@ -357,16 +357,16 @@ captured correctly. Updated regex pattern to handle
 multi-level nesting.
 
 Fixes #456
-\`\`\`
+```
 
 Bad:
-\`\`\`
+```
 fix stuff
-\`\`\`
+```
 
-\`\`\`
+```
 update
-\`\`\`
+```
 
 ---
 
@@ -385,19 +385,19 @@ update
 ### Submitting a PR
 
 1. **Push your branch:**
-   \`\`\`bash
+   ```bash
    git push origin feature/your-feature-name
-   \`\`\`
+   ```
 
 2. **Create Pull Request on GitHub:**
    - Clear title describing the change
-   - Reference related issues (\`Fixes #123\`, \`Closes #456\`)
+   - Reference related issues (`Fixes #123`, `Closes #456`)
    - Describe what changed and why
    - Include screenshots/demos if UI changes
    - List breaking changes if any
 
 3. **PR Template:**
-   \`\`\`markdown
+   ```markdown
    ## Description
    Brief description of changes
 
@@ -419,7 +419,7 @@ update
    - All new and existing tests passed
 
    ## Screenshots (if applicable)
-   \`\`\`
+   ```
 
 ### Review Process
 
@@ -447,7 +447,7 @@ update
 ### Recognition
 
 All contributors are recognized in:
-- \`CONTRIBUTORS.md\` - List of all contributors
+- `CONTRIBUTORS.md` - List of all contributors
 - GitHub Contributors page
 - Release notes for their contributions
 
